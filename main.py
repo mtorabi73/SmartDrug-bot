@@ -3,8 +3,8 @@ import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-API_URL = os.getenv("https://huggingface.co/spaces/Mohammadreza73/AG_Predictor")  # آدرس Space شما
-BOT_TOKEN = os.getenv("7715464310:AAEFFQjwHiqpMcyNtU07Lvx18Mz97zyvF9c")
+API_URL = os.getenv("API_URL")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("سلام! ساختار SMILES خود را بفرستید:")
