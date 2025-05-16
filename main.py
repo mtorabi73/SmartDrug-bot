@@ -1,28 +1,40 @@
-import os
-import requests
+import logging
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from gradio_client import Client
+import os
 
-API_URL = "https://huggingface.co/spaces/Mohammadreza73/AG_Predictor/api/predict"
+# مقداردهی به Token ربات از محیط Railway
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
+# اتصال به Hugging Face Space
+client = Client("Mohammadreza73/AG_Predictor")
+
+# تنظیمات مربوط به لاگ
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+
+# دستور /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("سلام! ساختار SMILES خود را بفرستید:")
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    smiles = update.message.text.strip()
+# هندل پیام‌های متنی شامل SMILES
+async def handle_smiles(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    smiles = update.message.text
     try:
-        response = requests.post(API_URL, json={"text": smiles})
-        if response.status_code == 200:
-            result = response.json()
-            await update.message.reply_text(f"پیش‌بینی مدل:\n{result}")
-        else:
-            await update.message.reply_text("خطا در اتصال به مدل.")
+        prediction = client.predict(smiles)  # فراخوانی مدل
+        await update.message.reply_text(f"نتیجه پیش‌بینی: {prediction}")
     except Exception as e:
-        await update.message.reply_text(f"خطا: {str(e)}")
+        logging.error(f"خطا در پیش‌بینی مدل: {e}")
+        await update.message.reply_text("خطا در پیش‌بینی مدل.")
 
-if __name__ == "__main__":
+# راه‌اندازی ربات
+if __name__ == '__main__':
     app = ApplicationBuilder().token(BOT_TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_smiles))
+
     app.run_polling()
